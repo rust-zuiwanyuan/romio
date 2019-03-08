@@ -342,7 +342,8 @@ impl AsyncDatagram for UdpSocket {
 impl AsyncReadReady for UdpSocket {
     type Ok = mio::Ready;
     type Err = io::Error;
-    fn poll_read_ready(&mut self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
+
+    fn poll_read_ready(&self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
         self.io.poll_read_ready(waker)
     }
 }
@@ -350,7 +351,8 @@ impl AsyncReadReady for UdpSocket {
 impl AsyncWriteReady for UdpSocket {
     type Ok = mio::Ready;
     type Err = io::Error;
-    fn poll_write_ready(&mut self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
+
+    fn poll_write_ready(&self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
       self.io.poll_write_ready(waker)
     }
 }
