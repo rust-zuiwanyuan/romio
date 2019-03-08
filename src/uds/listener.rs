@@ -2,6 +2,7 @@ use super::UnixStream;
 
 use crate::reactor::PollEvented;
 
+use async_ready::TakeError;
 use futures::task::Waker;
 use futures::{ready, Poll, Stream};
 use mio_uds;
@@ -77,24 +78,6 @@ impl UnixListener {
         self.io.get_ref().local_addr()
     }
 
-    /// Returns the value of the `SO_ERROR` option.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// use romio::uds::UnixListener;
-    ///
-    /// # fn main () -> Result<(), Box<dyn std::error::Error + 'static>> {
-    /// let listener = UnixListener::bind("/tmp/sock")?;
-    /// if let Ok(Some(err)) = listener.take_error() {
-    ///     println!("Got error: {:?}", err);
-    /// }
-    /// # Ok(())}
-    /// ```
-    pub fn take_error(&self) -> io::Result<Option<io::Error>> {
-        self.io.get_ref().take_error()
-    }
-
     /// Consumes this listener, returning a stream of the sockets this listener
     /// accepts.
     ///
@@ -150,6 +133,30 @@ impl UnixListener {
             }
             Err(err) => Poll::Ready(Err(err)),
         }
+    }
+}
+
+impl TakeError for UnixListener {
+    type Ok = io::Error;
+    type Err = io::Error;
+
+    /// Returns the value of the `SO_ERROR` option.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use romio::uds::UnixListener;
+    /// use romio::async_ready::TakeError;
+    ///
+    /// # fn main () -> Result<(), Box<dyn std::error::Error + 'static>> {
+    /// let listener = UnixListener::bind("/tmp/sock")?;
+    /// if let Ok(Some(err)) = listener.take_error() {
+    ///     println!("Got error: {:?}", err);
+    /// }
+    /// # Ok(())}
+    /// ```
+    fn take_error(&self) -> Result<Option<Self::Ok>, Self::Err> {
+        self.io.get_ref().take_error()
     }
 }
 
