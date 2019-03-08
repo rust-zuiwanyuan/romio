@@ -554,7 +554,6 @@ impl AsyncWriteReady for TcpStream {
     }
 }
 
-
 impl fmt::Debug for TcpStream {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.io.get_ref().fmt(f)

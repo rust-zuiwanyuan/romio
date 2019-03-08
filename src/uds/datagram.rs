@@ -1,9 +1,9 @@
 use crate::reactor::PollEvented;
 
+use async_ready::{AsyncReadReady, AsyncWriteReady, TakeError};
 use async_datagram::AsyncDatagram;
 use futures::task::Waker;
 use futures::{ready, Poll};
-use mio::Ready;
 use mio_uds;
 
 use std::fmt;
@@ -79,16 +79,6 @@ impl UnixDatagram {
         Ok(UnixDatagram::new(socket))
     }
 
-    /// Test whether this socket is ready to be read or not.
-    pub fn poll_read_ready(&self, waker: &Waker) -> Poll<io::Result<Ready>> {
-        self.io.poll_read_ready(waker)
-    }
-
-    /// Test whether this socket is ready to be written to or not.
-    pub fn poll_write_ready(&self, waker: &Waker) -> Poll<io::Result<Ready>> {
-        self.io.poll_write_ready(waker)
-    }
-
     /// Returns the local address that this socket is bound to.
     /// # Examples
     ///
@@ -120,24 +110,6 @@ impl UnixDatagram {
     /// ```
     pub fn peer_addr(&self) -> io::Result<SocketAddr> {
         self.io.get_ref().peer_addr()
-    }
-
-    /// Returns the value of the `SO_ERROR` option.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// use romio::uds::UnixDatagram;
-    ///
-    /// # fn run() -> std::io::Result<()> {
-    /// let stream = UnixDatagram::bind("/tmp/sock")?;
-    /// if let Ok(Some(err)) = stream.take_error() {
-    ///     println!("Got error: {:?}", err);
-    /// }
-    /// # Ok(()) }
-    /// ```
-    pub fn take_error(&self) -> io::Result<Option<io::Error>> {
-        self.io.get_ref().take_error()
     }
 
     /// Shut down the read, write, or both halves of this connection.
@@ -200,6 +172,50 @@ impl AsyncDatagram for UnixDatagram {
         } else {
             Poll::Ready(r)
         }
+    }
+}
+
+impl AsyncReadReady for UnixDatagram {
+    type Ok = mio::Ready;
+    type Err = io::Error;
+
+    /// Test whether this socket is ready to be read or not.
+    fn poll_read_ready(&self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
+        self.io.poll_read_ready(waker)
+    }
+}
+
+impl AsyncWriteReady for UnixDatagram {
+    type Ok = mio::Ready;
+    type Err = io::Error;
+
+    /// Test whether this socket is ready to be written to or not.
+    fn poll_write_ready(&self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
+      self.io.poll_write_ready(waker)
+    }
+}
+
+impl TakeError for UnixDatagram {
+    type Ok = io::Error;
+    type Err = io::Error;
+
+    /// Returns the value of the `SO_ERROR` option.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use romio::async_ready::TakeError;
+    /// use romio::uds::UnixDatagram;
+    ///
+    /// # fn run() -> std::io::Result<()> {
+    /// let stream = UnixDatagram::bind("/tmp/sock")?;
+    /// if let Ok(Some(err)) = stream.take_error() {
+    ///     println!("Got error: {:?}", err);
+    /// }
+    /// # Ok(()) }
+    /// ```
+    fn take_error(&self) -> Result<Option<Self::Ok>, Self::Err> {
+        self.io.get_ref().take_error()
     }
 }
 
