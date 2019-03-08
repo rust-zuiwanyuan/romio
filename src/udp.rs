@@ -17,6 +17,7 @@ use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::pin::Pin;
 
 use async_datagram::AsyncDatagram;
+use async_ready::{AsyncReadReady, AsyncWriteReady};
 use futures::task::Waker;
 use futures::Future;
 use futures::{ready, Poll};
@@ -130,28 +131,6 @@ impl UdpSocket {
     /// ```
     pub fn recv_from<'a, 'b>(&'a mut self, buf: &'b mut [u8]) -> RecvFrom<'a, 'b> {
         RecvFrom { buf, socket: self }
-    }
-
-    /// Check the UDP socket's read readiness state.
-    ///
-    /// If the socket is not ready for receiving then `Poll::Pending` is
-    /// returned and the current task is notified once a new event is received.
-    ///
-    /// The socket will remain in a read-ready state until calls to `poll_recv`
-    /// return `Pending`.
-    pub fn poll_read_ready(&self, waker: &Waker) -> Poll<io::Result<mio::Ready>> {
-        self.io.poll_read_ready(waker)
-    }
-
-    /// Check the UDP socket's write readiness state.
-    ///
-    /// If the socket is not ready for sending then `Poll::Pending` is
-    /// returned and the current task is notified once a new event is received.
-    ///
-    /// The I/O resource will remain in a write-ready state until calls to
-    /// `poll_send` return `Pending`.
-    pub fn poll_write_ready(&self, waker: &Waker) -> Poll<io::Result<mio::Ready>> {
-        self.io.poll_write_ready(waker)
     }
 
     /// Gets the value of the `SO_BROADCAST` option for this socket.
@@ -357,6 +336,22 @@ impl AsyncDatagram for UdpSocket {
             }
             Err(e) => Poll::Ready(Err(e)),
         }
+     }
+}
+
+impl AsyncReadReady for UdpSocket {
+    type Ok = mio::Ready;
+    type Err = io::Error;
+    fn poll_read_ready(&mut self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
+        self.io.poll_read_ready(waker)
+    }
+}
+
+impl AsyncWriteReady for UdpSocket {
+    type Ok = mio::Ready;
+    type Err = io::Error;
+    fn poll_write_ready(&mut self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
+      self.io.poll_write_ready(waker)
     }
 }
 
