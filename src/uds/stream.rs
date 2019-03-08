@@ -184,7 +184,7 @@ impl AsyncWriteReady for UnixStream {
 
     /// Test whether this socket is ready to be written to or not.
     fn poll_write_ready(&self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
-      self.io.poll_write_ready(waker)
+        self.io.poll_write_ready(waker)
     }
 }
 

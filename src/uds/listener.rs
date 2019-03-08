@@ -136,7 +136,6 @@ impl AsyncReady for UnixListener {
     /// Check if the stream can be read from.
     fn poll_ready(&self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
         let (io, addr) = ready!(self.poll_accept_std(waker)?);
-
         let io = mio_uds::UnixStream::from_stream(io)?;
         Poll::Ready(Ok((UnixStream::new(io), addr)))
     }

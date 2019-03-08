@@ -1,7 +1,7 @@
 use crate::reactor::PollEvented;
 
-use async_ready::{AsyncReadReady, AsyncWriteReady, TakeError};
 use async_datagram::AsyncDatagram;
+use async_ready::{AsyncReadReady, AsyncWriteReady, TakeError};
 use futures::task::Waker;
 use futures::{ready, Poll};
 use mio_uds;
@@ -157,7 +157,7 @@ impl AsyncDatagram for UnixDatagram {
         }
     }
 
-     fn poll_recv_from(
+    fn poll_recv_from(
         &mut self,
         waker: &Waker,
         buf: &mut [u8],
@@ -191,7 +191,7 @@ impl AsyncWriteReady for UnixDatagram {
 
     /// Test whether this socket is ready to be written to or not.
     fn poll_write_ready(&self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
-      self.io.poll_write_ready(waker)
+        self.io.poll_write_ready(waker)
     }
 }
 
