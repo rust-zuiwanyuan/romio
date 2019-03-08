@@ -2,7 +2,7 @@ use super::UnixStream;
 
 use crate::reactor::PollEvented;
 
-use async_ready::TakeError;
+use async_ready::{AsyncReady, TakeError};
 use futures::task::Waker;
 use futures::{ready, Poll, Stream};
 use mio_uds;
@@ -111,13 +111,6 @@ impl UnixListener {
         Incoming::new(self)
     }
 
-    fn poll_accept(&self, waker: &Waker) -> Poll<io::Result<(UnixStream, SocketAddr)>> {
-        let (io, addr) = ready!(self.poll_accept_std(waker)?);
-
-        let io = mio_uds::UnixStream::from_stream(io)?;
-        Poll::Ready(Ok((UnixStream::new(io), addr)))
-    }
-
     fn poll_accept_std(&self, waker: &Waker) -> Poll<io::Result<(net::UnixStream, SocketAddr)>> {
         ready!(self.io.poll_read_ready(waker)?);
 
@@ -133,6 +126,19 @@ impl UnixListener {
             }
             Err(err) => Poll::Ready(Err(err)),
         }
+    }
+}
+
+impl AsyncReady for UnixListener {
+    type Ok = (UnixStream, SocketAddr);
+    type Err = std::io::Error;
+
+    /// Check if the stream can be read from.
+    fn poll_ready(&self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
+        let (io, addr) = ready!(self.poll_accept_std(waker)?);
+
+        let io = mio_uds::UnixStream::from_stream(io)?;
+        Poll::Ready(Ok((UnixStream::new(io), addr)))
     }
 }
 
@@ -188,7 +194,7 @@ impl Stream for Incoming {
     type Item = io::Result<UnixStream>;
 
     fn poll_next(self: Pin<&mut Self>, waker: &Waker) -> Poll<Option<Self::Item>> {
-        let (socket, _) = ready!(self.inner.poll_accept(waker)?);
+        let (socket, _) = ready!(self.inner.poll_ready(waker)?);
         Poll::Ready(Some(Ok(socket)))
     }
 }
