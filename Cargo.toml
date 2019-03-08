@@ -30,7 +30,7 @@ parking_lot = "0.7.1"
 slab = "0.4.2"
 libc = "0.2.48"
 async-datagram = "2.0.0"
-async-ready = "1.0.1"
+async-ready = "2.0.0"
 
 [dependencies.futures]
 version = "0.3.0-alpha.13"
@@ -44,6 +44,3 @@ rand = "0.6.5"
 [dev-dependencies.env_logger]
 version = "0.6.0"
 default-features = false
-
-[patch.crates-io]
-async-ready = { path = '../../yoshuawuyts/async-ready' }
