@@ -343,6 +343,13 @@ impl AsyncReadReady for UdpSocket {
     type Ok = mio::Ready;
     type Err = io::Error;
 
+    /// Check the UDP socket's read readiness state.
+    ///
+    /// If the socket is not ready for receiving then `Poll::Pending` is
+    /// returned and the current task is notified once a new event is received.
+    ///
+    /// The socket will remain in a read-ready state until calls to `poll_recv`
+    /// return `Pending`.
     fn poll_read_ready(&self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
         self.io.poll_read_ready(waker)
     }
@@ -352,6 +359,13 @@ impl AsyncWriteReady for UdpSocket {
     type Ok = mio::Ready;
     type Err = io::Error;
 
+    /// Check the UDP socket's write readiness state.
+    ///
+    /// If the socket is not ready for sending then `Poll::Pending` is
+    /// returned and the current task is notified once a new event is received.
+    ///
+    /// The I/O resource will remain in a write-ready state until calls to
+    /// `poll_send` return `Pending`.
     fn poll_write_ready(&self, waker: &Waker) -> Poll<Result<Self::Ok, Self::Err>> {
       self.io.poll_write_ready(waker)
     }
